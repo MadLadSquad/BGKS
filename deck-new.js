@@ -1,16 +1,16 @@
 'use strict';
 
 // Global variables, why not
-var previewName = window.CARD_DEFAULT_PREVIEW_NAME;
-var previewCharacter = window.CARD_DEFAULT_CHARACTER;
-var previewDefinitions = [  ];
-var previewVariant = "";
+window.previewCards = [];
+window.previewPhrase = null;
 
-var bUsingPinyinConversion = false;
+window.bUsingPinyinConversion = false;
 
-var writer;
+window.writer;
 
+// Convert each word in a sentence to pinyin
 function pinyinify(string) {
+	// Ugly af but it's the only way we can do it ig
 	const pinyin =
 	{
 		"uai": [ "uāi", "uái", "uǎi", "uài", "uai" ],
@@ -39,6 +39,7 @@ function pinyinify(string) {
 
 	let arr = string.toLowerCase().split(' ');
 
+	// Pinyin-ify every element
 	for (let i in arr)
 	{
 		for (const [key, val] of Object.entries(pinyin))
@@ -51,184 +52,68 @@ function pinyinify(string) {
 				if (lastEl >= '0' && lastEl <= '5')
 				{
 					index = parseInt(lastEl);
-					arr[i] = arr[i].substr(0, arr[i].length - 1);
-					if (lastEl == '0')
+					arr[i] = arr[i].substring(0, arr[i].length - 1);
+					if (lastEl === '0')
 						index = 5;
 				}
 				arr[i] = arr[i].replace(key, val[index - 1]);
-				continue;
 			}
 		}
 	}
 	return arr.join(" ");
 }
 
-function updateListElements()
+function constructPreviewCardGeneric(index, it, owner)
 {
-	const editList = document.getElementById("definition-list-current-edit");
-	const previewList = document.getElementById("card-preview-list");
-	editList.replaceChildren(...window.previewDefinitions);
+	let root = addElement("div", "", `character-preview-${index}`, "card centered", "", owner);
 
-	let tmpArr = [];
-	for (let i = 0; i < window.previewDefinitions.length; i++)
+	let lit = it;
+	// Local it variable because phrases will require finding the card
+	if (it === null || it["phrase"])
 	{
-		let el = document.createElement("li");
-		el.textContent = window.previewDefinitions[i].textContent.slice(0, -1);
-		tmpArr.push(el);
-	}
-	previewList.replaceChildren(...tmpArr);
-}
-
-function finishButtonNewCard()
-{
-	const data = {
-		name: window.previewName,
-		character: window.previewCharacter + window.previewVariant,
-		knowledge: 0,
-		definitions: [],
-	}
-
-	for (let i = 0; i < previewDefinitions.length; i++)
-	{
-		data["definitions"].push(previewDefinitions[i].innerText.slice(0, -1));
-	}
-
-	window.localStorageData["cards"].push(data);
-	saveToLocalStorage(window.localStorageData);
-	location.href = "./deck.html";
-}
-
-// Always call updateListElements after this
-// Returns void, takes the name of the list element and an id for further on click events
-function constructListElement(name, id)
-{
-	let el = document.createElement("li");
-	el.textContent = (name + " ");
-
-	// Add a remove definition button on each call
-	let button = document.createElement("button");
-	button.className = "card-button-edit small-button";
-	button.id = `remove-meaning-list-button-${id}`;
-	button.textContent = "-";
-	button.addEventListener("click", function()
-	{
-		for (let i = 0; i < window.previewDefinitions.length; i++)
+		if (it !== null)
 		{
-			if (window.previewDefinitions[i].firstElementChild.id == this.id)
+			for (let i in window.localStorageData.cards)
 			{
-				window.previewDefinitions.splice(i, 1);
-				updateListElements();
-				break;
+				if (window.localStorageData.cards[i].character === it.phrase[index])
+				{
+					lit = window.localStorageData.cards[i];
+					break;
+				}
+			}
+
+			for (let i in window.previewCards)
+			{
+				if (window.previewCards[i].character === it.phrase[index])
+				{
+					lit = window.previewCards[i];
+					break;
+				}
 			}
 		}
-	});
 
-	// Append the button to the list element and push to the preview definitions list
-	el.appendChild(button);
-	window.previewDefinitions.push(el);
-}
-
-// Returns void, takes references to the name text field, the character text field and the definition ordered list
-function addFinishButton(nameTextField, characterTextField, meaningList)
-{
-	const button = document.getElementById("finish-edit-button");
-	const urlParams = new URLSearchParams(window.location.search);
-	let finishButtonClickFunction;
-
-	if (urlParams.has("edit"))
-	{
-		const data = window.localStorageData["cards"];
-		// This statement checkf if the number provided as a parameter of the page is higher or equal to the length of the array.
-		// This check is needed because we use indexes as parameters for editing the card
-		if (urlParams.get("edit") >= data.length)
+		if (it === null || lit === it)
 		{
-			finishButtonClickFunction = finishButtonNewCard;
-			return;
+			window.previewCards.push({
+				name: lc.unknown_character,
+				character: it === null ? window.CARD_DEFAULT_CHARACTER : it.phrase[index],
+				variant: "",
+				knowledge: 0,
+				definitions: []
+			});
+			lit = window.previewCards[window.previewCards.length - 1];
 		}
-		// Get reference to the element we're currently editing
-		const el = data[urlParams.get("edit")]
-
-		const nameTextBox = document.getElementById("name-text-field");
-		const characterTextBox = document.getElementById("character-text-field");
-		const previewName = document.getElementById("card-preview-name");
-
-		nameTextBox.value = el["name"];
-		window.previewName = el["name"];
-		previewName.textContent = el["name"];
-
-		characterTextBox.value = el["character"].charAt(0);
-		window.previewCharacter = el["character"].charAt(0);
-
-		// Deal with regional character variants
-		window.previewVariant = el["character"].length > 1 ? el["character"].substr(1, el["character"].length) : "";
-		document.getElementById("character-variant-box").value = window.previewVariant;
-
-		// Add all the definitions to the ordered lists
-		for (let i in el["definitions"])
-		{
-			let it = el["definitions"][i];
-			constructListElement(it, i);
-			updateListElements();
-		}
-
-		// Callback for the finish button
-		finishButtonClickFunction = function()
-		{
-			const urlParams = new URLSearchParams(window.location.search);
-			let dt = window.localStorageData;
-			let data = dt["cards"][urlParams.get("edit")];
-
-			data["name"] = window.previewName;
-			data["character"] = window.previewCharacter.charAt(0) + window.previewVariant;
-			data["definitions"] = [];
-			for (let i = 0; i < previewDefinitions.length; i++)
-			{
-				data["definitions"].push(previewDefinitions[i].innerText.slice(0, -1));
-			}
-			saveToLocalStorage(dt);
-			location.href = "./deck.html";
-		};
-
-		// Dynamically put the delete button there because it doesn't exist by default in the HTML
-		const parentDiv = document.getElementById("current-new-card");
-		const deleteButton = document.createElement("button");
-		deleteButton.id = "delete-card-button";
-		deleteButton.className = "card-button-edit";
-		deleteButton.textContent = "Delete"
-
-		// On click ask for confirmation
-		deleteButton.addEventListener("click", function()
-		{
-			let bExecuted = confirm("Are you sure you want to delete the card?");
-			if (bExecuted)
-			{
-				const urlParams = new URLSearchParams(window.location.search);
-				let dt = window.localStorageData;
-				dt["cards"].splice(urlParams.get("edit"), 1);
-
-				saveToLocalStorage(dt);
-				location.href = "./deck.html"
-			}
-		});
-		// Add the button to the div
-		parentDiv.appendChild(deleteButton);
 	}
-	else // In any other case such as non "edit" parameters we assing to this
-		finishButtonClickFunction = finishButtonNewCard;
 
-	// Add selected function event
-	button.addEventListener("click", finishButtonClickFunction);
-}
+	addElement("h3", lit.name, `card-preview-name-${index}`, "", "", root);
+	let writerArea = addElement("div", "", `card-character-target-div-preview-${index}`, "", "", root);
+	addElement("p", `${lc.deck_definitions}`, "", "", "", root);
+	let list = addElement("ol", "", `card-preview-list-${index}`, "", "", root);
 
-function addButtonEvent(id, type, func)
-{
-	document.getElementById(id).addEventListener(type, func);
-}
+	for (let definition in lit.definitions)
+		addElement("li", lit.definitions[definition], "", "", "", list);
 
-function writerRecreate()
-{
-	document.getElementById("card-character-target-div-preview").replaceChildren();
-	window.writer = HanziWriter.create("card-character-target-div-preview", window.previewCharacter,
+	writerArea.writer = HanziWriter.create(`card-character-target-div-preview-${index}`, lit.character + lit.variant,
 	{
 		width: window.CARD_WRITER_SIZE,
 		height: window.CARD_WRITER_SIZE,
@@ -238,104 +123,314 @@ function writerRecreate()
 		delayBetweenStrokes: window.CARD_WRITER_DELAY_BETWEEN_STROKES,
 		charDataLoader: charDataLoader,
 	})
+	writerArea.addEventListener("mouseover", function(){
+		this.writer.animateCharacter();
+	})
+	return lit;
 }
 
-async function fetchCharacterVariant(character, postfix, textContent)
+function constructInputElement(container, id, classT, type, ariaLabel, name, previewID, callback)
 {
-	let select = document.getElementById("character-variant-box")
-	let res = await fetch(`https://cdn.jsdelivr.net/gh/MadLadSquad/hanzi-writer-data-youyin@latest/data/${character}${postfix}.json`)
-	let bFound = false;
-	for (let i in select.options)
+	let input = addElement("input", "", id, classT, "", container);
+	input.setAttribute("type", type);
+	input.setAttribute("aria-label", ariaLabel);
+	input.setAttribute("name", name);
+	input.previewID = previewID;
+
+	input.addEventListener("change", (event) =>
 	{
-		let it = select.options[i].value
-		if (it == postfix)
-		{
-			bFound = true;
-			if (await res.status !== 200)
-			{
-				select.removeChild(select.options[i]);
-			}
+		event.target.value = window.bUsingPinyinConversion ? pinyinify(event.target.value) : event.target.value;
+		if (previewID !== "")
+			$(previewID).textContent = event.target.value;
+	});
+	if (callback !== null)
+		input.addEventListener("change", callback);
+	return input;
+}
+
+function constructPhraseEditCardPreview(it) {
+	let lit = it;
+	if (it === null)
+	{
+		window.previewPhrase = {
+			name: lc.unknown_phrase,
+			phrase: window.CARD_DEFAULT_CHARACTER,
+			knowledge: 0,
+			definitions: []
+		};
+		lit = window.previewPhrase;
+	}
+
+	let phrasePreviewRoot = addElement("div", "", "character-preview-phrase", "card centered", "", $("phrase-preview-section-container"));
+	addElement("h3", lit.name, "card-preview-name-phrase", "", "", phrasePreviewRoot);
+	addElement("h1", lit.phrase, "card-character-target-div-phrase", "phrase-card-header", "", phrasePreviewRoot);
+	addElement("p", `${lc.deck_definitions}`, "", "", "", phrasePreviewRoot);
+	let list = addElement("ol", "", "card-preview-list-phrase", "", "", phrasePreviewRoot)
+	for (let definition in lit.definitions)
+		addElement("li", lit.definitions[definition], "", "", "", list);
+	return lit;
+}
+
+async function testVariantExists(character, postfix)
+{
+	return await charDataLoader(character + postfix, null, null);
+}
+
+async function constructCharacterVariantSelect(container, id, classT, ariaLabel, name, it)
+{
+	let select = addElement("select", "", id, classT, "", container);
+	select.setAttribute("aria-label", ariaLabel);
+	select.setAttribute("name", name);
+	select.ownerReference = it;
+
+	addElement("option", lc.character_variant_default, "", "", "", select).setAttribute("value", "");
+	if (await testVariantExists(it.character, "-jp") !== undefined)
+		addElement("option", `🇯🇵   ${lc.character_variant_kanji}`, "", "", "", select).setAttribute("value", "-jp");
+	if (await testVariantExists(it.character, "-ko") !== undefined)
+		addElement("option", `🇰🇷   ${lc.character_variant_hanja}`, "", "", "", select).setAttribute("value", "-ko");
+
+	select.addEventListener("change", function() {
+		this.ownerReference.variant = this.value;
+	});
+}
+
+function reconstructDefinitionList(previewList, editList, definitions, bReadOnly)
+{
+	if (previewList === null || editList === null)
+		return;
+
+	previewList.replaceChildren();
+	editList.replaceChildren();
+	for (let i in definitions)
+	{
+		addElement("li", definitions[i], "", "", "", previewList);
+
+		let li = addElement("li", definitions[i], "", "", "", editList);
+		if (bReadOnly)
 			return;
+
+		addTextNode(li, " ");
+
+		let button = addElement("button", "-", "", "card-button-edit small-button", "", li);
+		button.previewList = previewList;
+		button.editList = editList;
+		button.definitions = definitions;
+		button.defIndex = i;
+
+		button.addEventListener("click", function(){
+			this.definitions.splice(this.defIndex, 1);
+			reconstructDefinitionList(this.previewList, this.editList, this.definitions, false)
+		});
+	}
+}
+
+function constructEditCard(index, it, root, bPhrase)
+{
+	let lit = it;
+
+	// If this is set to false, the data about a card can be edited. This will create a bunch of text boxes
+	// to be actually able to edit the card
+	let bReadOnly = true;
+
+	// If editing the character is allowed. When editing new cards as part of a phrase we set this to false
+	// as the character is determined by the 
+	let bAllowChangingCharacter = true;
+
+	// Is a phrase object but not representing a phrase
+	if (it["phrase"] && !bPhrase)
+	{
+		for (let f in window.localStorageData.cards)
+		{
+			if (it.phrase[index] === window.localStorageData.cards[f].character)
+			{
+				lit = window.localStorageData.cards[f];
+				break;
+			}
+		}
+
+		for (let i in window.previewCards)
+		{
+			if (window.previewCards[i].character === it.phrase[index])
+			{
+				lit = window.previewCards[i];
+				bReadOnly = false;
+
+				for (let f = index - 1; f >= 0; --f)
+				{
+					if (it.phrase[f] === it.phrase[index])
+					{
+						bReadOnly = true;
+						bAllowChangingCharacter = false;
+						break;
+					}
+				}
+				break;
+			}
 		}
 	}
-	if (!bFound && await res.status === 200)
+	else if (it["phrase"] && bPhrase)
+		bReadOnly = false;
+	else if (it["character"])
+		bReadOnly = false;
+
+	let container = addElement("div", "", `edit-phrase-${index}`, "card centered", "", root);
+	container.setAttribute("yy-readonly", bReadOnly);
+
+	addElement("h3", `${lc.card_name}: ` + (bReadOnly
+													? lit.name
+													: ""),
+													"", "", "", container);
+
+	if (!bReadOnly)
 	{
-		let option = document.createElement("option");
-		option.setAttribute("value", postfix);
-		option.textContent = textContent;
-		select.appendChild(option)
+		constructInputElement(container, `name-text-field-${index}`, "", "text", lc.name_text_field_aria, lc.name_text_field_aria, `card-preview-name-${index}`, (event) => {
+			lit.name = event.target.value;
+		}).value = lit !== null ? lit.name : "";
+	}
+
+	addElement("h3", 
+					bPhrase ? `${lc.card_phrase}: ` + (bReadOnly
+																? lit.phrase
+																: "")
+							: `${lc.card_character}: ` + (bReadOnly || !bAllowChangingCharacter
+																								? lit.character
+																								: ""),
+					"", "", "", container);
+
+	let characterInput = null;
+	if (!bReadOnly && bAllowChangingCharacter)
+	{
+		characterInput = constructInputElement(container, `character-text-field-${index}`, "", "text", lc.character_text_field_aria, lc.character_text_field_aria, "", null);
+		characterInput.value = lit !== null ? (lit["character"] ? lit.character : lit.phrase) : "";
+	}
+
+	if (lit !== null && lit["phrase"] && characterInput !== null)
+	{
+		characterInput.addEventListener("change", (event) => {
+			let phrasePreviewContainer = $("phrase-preview-section-container");
+			let cardEditSection = $("card-edit-section");
+
+			// Clear children and reconstruct previews
+			phrasePreviewContainer.replaceChildren();
+			cardEditSection.replaceChildren();
+			lit.phrase = event.target.value;
+
+			window.previewCards = [];
+			constructPhraseEditCardPreview(lit, phrasePreviewContainer);
+			constructEditCard("phrase", lit, cardEditSection, true);
+			for (let i in lit.phrase)
+			{
+				constructPreviewCardGeneric(i, lit, phrasePreviewContainer);
+				constructEditCard(i, lit, cardEditSection);
+			}
+		});
+	}
+
+	if (!bPhrase && !bReadOnly)
+	{
+		// A little padding
+		addTextNode(container, " ");
+		constructCharacterVariantSelect(container, `character-variant-box-${index}`, "centered", lc.character_variant_box_aria, lc.character_variant_box_aria, lit).then(_ => {});
+	}
+
+	addElement("h3", `${lc.deck_definitions}`, "", "", "", container);
+	if (!bReadOnly)
+	{
+		constructInputElement(container, `meaning-text-field-${index}`, "", "text", lc.meaning_text_field_aria, lc.meaning_text_field_aria, "", null);
+
+		// A little padding
+		addTextNode(container, " ");
+		let addButton = addElement("button", "+", `add-meaning-list-button-${index}`, "card-button-edit small-button", "", container);
+
+		addButton.addEventListener("click", (_) => {
+			let textField = $(`meaning-text-field-${index}`);
+			lit.definitions.push(textField.value);
+			textField.value = "";
+
+			reconstructDefinitionList($(`card-preview-list-${index}`), $(`definition-list-current-edit-${index}`), lit.definitions, false)
+		});
+	}
+	let ol = addElement("ol", "", `definition-list-current-edit-${index}`, "", "", container);
+	reconstructDefinitionList($(`card-preview-list-${index}`), ol, lit.definitions, bReadOnly)
+}
+
+function constructListElements()
+{
+	const urlParams = new URLSearchParams(window.location.search);
+	let dataContainer = null;
+	let index = null;
+
+	if (urlParams.has("edit"))
+	{
+		dataContainer = window.localStorageData.cards;
+		index = urlParams.get("edit");
+	}
+	else if (urlParams.has("phrase-edit"))
+	{
+		dataContainer = window.localStorageData.phrases;
+		index = urlParams.get("phrase-edit");
+		$("phrase-preview-section").style.display = "block";
+	}
+
+	let cardEditSection = $("card-edit-section");
+	if (dataContainer !== null && index <= dataContainer.length)
+	{
+		let it = dataContainer[index];
+		
+		if (it["character"])
+		{
+			constructPreviewCardGeneric(0, it, cardEditSection, false);
+			constructEditCard(0, it, cardEditSection, true);
+			for (let i = 0; i < cardEditSection.childNodes.length; i++)
+				cardEditSection.insertBefore(cardEditSection.childNodes[i], cardEditSection.firstChild);
+		}
+		else
+		{
+			let phrasePreviewSectionContainer = $("phrase-preview-section-container");
+			constructPhraseEditCardPreview(it);
+			constructEditCard("phrase", it, cardEditSection, true);
+			for (let i in it["phrase"])
+			{
+				constructPreviewCardGeneric(i, it, phrasePreviewSectionContainer, true)
+				constructEditCard(i, it, cardEditSection, false);
+			}
+		}
+	}
+	else if (urlParams.has("phrase-new"))
+	{
+		$("phrase-preview-section").style.display = "block";
+
+		let lit = constructPhraseEditCardPreview(null);
+		constructEditCard("phrase", lit, cardEditSection, true);
+	}
+	else
+	{
+		let lit = constructPreviewCardGeneric(0, null, cardEditSection, false);
+		constructEditCard("0", lit, cardEditSection, false);
+
+		// Reverse children of $("card-edit-section") because we display the preview before the edit widget
+		for (let i = 0; i < cardEditSection.childNodes.length; i++)
+			cardEditSection.insertBefore(cardEditSection.childNodes[i], cardEditSection.firstChild);
 	}
 }
 
-async function fetchCharacterVariantsFromDB()
+function deckEditMain()
 {
-	let dt = await window.writer.getCharacterData();
+	constructListElements();
+	$("finish-edit-button").addEventListener("click", function() {
+		if (window.previewPhrase !== null)
+			window.localStorageData.phrases.push(window.previewPhrase);
 
-	await fetchCharacterVariant(dt.symbol, "-jp", "🇯🇵 Kanji");
-	await fetchCharacterVariant(dt.symbol, "-ko", "🇰🇷 Hanja");
+		window.localStorageData.cards.push(...window.previewCards.filter((value, index) => {
+			const v = JSON.stringify(value);
+			return index === window.previewCards.findIndex(obj => {
+				return JSON.stringify(obj) === v;
+			});
+		}));
+
+		saveToLocalStorage(window.localStorageData);
+		location.href = "./deck.html";
+	});
 }
 
-function constructPreviewEvents()
-{
-	const nameTextField = document.getElementById("name-text-field");
-	const characterTextField = document.getElementById("character-text-field");
-
-	addFinishButton(nameTextField, characterTextField, null);
-
-	document.getElementById("meaning-text-field").addEventListener("change", function()
-	{
-		let t = window.bUsingPinyinConversion ? pinyinify(this.value) : this.value;
-		this.value = t;
-	});
-
-	addButtonEvent("add-meaning-list-button", "click", function()
-	{
-		const txtField = document.getElementById("meaning-text-field");
-
-		if (txtField.value == "")
-			return;
-
-		let t = window.bUsingPinyinConversion ? pinyinify(txtField.value) : txtField.value;
-		txtField.value = t;
-
-		constructListElement(txtField.value, window.previewDefinitions.length);
-		updateListElements();
-		txtField.value = "";
-	});
-
-	addButtonEvent("card-character-target-div-preview", "mouseover", function()
-	{
-		window.writer.animateCharacter();
-	});
-
-	nameTextField.addEventListener("change", function()
-	{
-		window.previewName = window.bUsingPinyinConversion ? pinyinify(this.value) : this.value;
-		this.value = window.previewName;
-		if (window.previewName == "")
-			window.previewName = window.CARD_DEFAULT_PREVIEW_NAME;
-
-		const el = document.getElementById("card-preview-name");
-		el.innerText = `${window.previewName}`;
-	});
-
-	characterTextField.addEventListener("change", function()
-	{
-		window.previewCharacter = window.bUsingPinyinConversion ? pinyinify(this.value) : this.value;
-		this.value = window.previewCharacter;
-		if (window.previewCharacter == "")
-			window.previewCharacter = window.CARD_DEFAULT_CHARACTER;
-
-		window.writer.setCharacter(window.previewCharacter.charAt(0) + window.previewVariant);
-		fetchCharacterVariantsFromDB();
-	});
-	document.getElementById("character-variant-box").addEventListener("change", function()
-	{
-		window.previewVariant = this.value;
-		window.writer.setCharacter(window.previewCharacter.charAt(0) + window.previewVariant);
-	});
-	writerRecreate();
-	fetchCharacterVariantsFromDB();
-}
-
-constructPreviewEvents();
+deckEditMain();

@@ -2,70 +2,68 @@
 <html lang="en">
 	<head>
 		{{ include Components/head.tmpl.html }}
-		<title class="site-title">About | {{ trademark }}</title>
+		<title class="site-title">{{ _ about-us }} | {{ trademark }} </title>
 	</head>
 	<body>
 		{{ include Components/header.tmpl.html }}
-		<main>
-			<h1>About {{ trademark }}</h1>
+		<main class="article">
+			<h1>{{ _ about_h1 }}</h1>
 			<p>
-				{{ trademark }} is a simple application, which uses extracts from over 50K literature works to correct one's broken grammar, punctuation or spelling in a given language.
-
+				{{ _ about_p1_1 }}
 				<br><br>
-
-				The standard methods for fixing issues with grammar, punctuation or spelling have traditionally been to either study and remember all language rules, or to read a lot of books.
-				While both of these methods do help, they have their own drawbacks. 
-
-				<br>
-
-				While reading will improve writing, it takes a lot of time, mostly because it's a passive learning method, when talking about improving your grammar. On the other hand, one may decide
-				to learn all rules of the language, but some languages have so many exceptions that they may get confused. Additionally, even if one learns all the rules, practice is still needed to
-				remember when and how to use them.
-
-				<br>
-
-				This is where {{ trademark }}, comes in. Using extracts from different types of literature works, we teach you the usage of a word in different contexts. This is done by prompting you to fill
-				in the word or its corressponding variations in an extract from a text. This design makes it fast
-
-				Currently, we only support the following languages:
-				<ol>
-					<li>Bulgarian - with data from <a href="https://chitanka.info">chitanka.info</a></li>
-				</ol>
-			</p>
-			<h2>The story of the app's development</h2>
-			<p>
-				On the 31st of September 2023, <a href="https://i-use-gentoo-btw.com">Stanislav Vasilev(Madman10K)</a> decided to create a website, where he could teach himself proper bulgarian grammar,
-				punctuation and spelling more effectively. He made the initial version by combining it with text data from the <a href="https://chitanka.info">chitanka.info</a> website, making it fully
-				functional for writing bulgarian.
-			</p>
-			<p>
-				The name is an acronym for "Bulgarian 考试(kǎoshì)". The latter part of the name simply means "test" in Mandarin, which we decided to use, since variations of the name in other languages were
-				already taken.
-			</p>
-
-			<h2>Credits</h2>
-			<p>
-				We want to thank the following people for helping with the development of the application:
+				{{ _ about_p1_2 }}
 			</p>
 			<ol>
-				<li><a href="https://github.com/ProHunter67BG">Hristian Rusev</a> for providing German translations</li>
-				<li><a href="https://github.com/Neyko641">Neyko Naydenov</a> for providing Japanese translations</li>
-				<li><a href="https://github.com/nick-1666">Nick-1666</a> for helping with UI and UX issues</li>
+				<li>{{ _ about_p1_li_1 }}</li>
+				<li>{{ _ about_p1_li_2 }}</li>
+				<li>{{ _ about_p1_li_3 }}</li>
 			</ol>
+			<p>{{ _ about_p2 {{ raw <a href="https://pleco.com">Pleco</a>}} }}</p>
 
-			<h1>More like {{ trademark }}</h1>
-			<p><a href="https://madladsquad.com/">MadLad Squad</a> develops more than just BGTest, check out the following language learning applications and libraries<p/>
+			<h2>{{ _ about_h2 }}</h2>
+			<p>
+				{{ _ about_p3_1 {{ raw <a href="https://madman10k.online/">Stanislav Vasilev(Madman10K)</a>}} }}
+				<br><br>
+				{{ _ about_p3_2 {{ raw <a href="https://en.wikipedia.org/wiki/Among_Us">Among us</a>}} }}
+			</p>
 			<ol>
-				<li><a href="https://littok.madladsquad.com/">LitTok</a> - Reading in the form of a TikTok-like application</li>
+				<li>{{ _ about_p3_li_1 }}</li>
+				<li>{{ _ about_p3_li_2 }}</li>
+				<li>{{ _ about_p3_li_3 }}</li>
+			</ol>
+			<p>
+				{{ _ about_p3 }}
+				<br>
+			</p>
+
+			<h2>{{ _ about_h3 }}</h2>
+			<p>{{ _ about_p4 }}</p>
+			<ol>
+				<li><a href="https://github.com/skishore/makemeahanzi">Makemeahanzi</a>{{ _ about_p4_li_1 }}</li>
+				<li><a href="https://github.com/chanind/hanzi-writer">Hanziwriter</a>{{ _ about_p4_li_2 }}</li>
+				<li><a href="https://github.com/parsimonhi/animCJK">animCJK</a>{{ _ about_p4_li_3 }}</li>
+			</ol>
+			<p>{{ _ about_p5 }}</p>
+			<ol>
+				<li>{{ _ about_p5_li_1 {{ raw <a href="https://github.com/ProHunter67BG">Hristian Rusev</a>}} }}</li>
+				<li>{{ _ about_p5_li_2 {{ raw <a href="https://github.com/Neyko641">Neyko Naydenov</a>}} }}</li>
+				<li>{{ _ about_p5_li_3 {{ raw <a href="https://github.com/nick-1666">Nick-1666</a>}} }}</li>
+			</ol>
+			<h1>{{ _ about_h4 }}</h1>
+			<h2>{{ _ about_h4_h1 }}</h2>
+			<p>{{ _ about_q1 }}</p>
+			<p>{{ _ about_a1 {{ raw <a href="https://grammarly.com">Grammarly</a>}} }}</p>
+
+			<h1>{{ _ about_h5 }}</h1>
+			<p>{{ _ about_h5_3 {{ raw <a href="https://madladsquad.com/">MadLad Squad</a>}} }}</p>
+			<ol>
+				<li><a href="https://bgks.madladsquad.com">BGKS</a>{{ _ about_h5_1 }}</li>
+				<li><a href="https://littok.madladsquad.com">LitTok</a>{{ _ about_h5_2 }}</li>
 				<li>
-					<a href="https://youyin.madladsquad.com/">Youyin</a> - A website for learning to write in different writing systems
+					<a href="https://github.com/MadLadSquad/UntitledIBusHandwriting">UntitledIBusHandwriting</a>{{ _ about_h5_4 {{ raw <a href="https://en.wikipedia.org/wiki/Intelligent_Input_Bus">ibus</a>}} }}
 				</li>
-				<li>
-					<a href="https://github.com/MadLadSquad/UntitledIBusHandwriting">UntitledIBusHandwriting</a> - A handwriting plugin for <a href="https://en.wikipedia.org/wiki/Intelligent_Input_Bus">ibus</a>
-				</li>
-				<li><a href="https://github.com/MadLadSquad/hanzi-writer-data-youyin">hanzi-writer-data-youyin</a> - All character data used in Youyin in one place</li>
-				<li><a href="https://github.com/MadLadSquad/bgks-data-bulgarian">bgks-data-bulgarian</a> - All bulgarian data for BGKS</li>
-				<li><a href="https://madladsquad.com/untitled-desktop/subprojects/i18n">i18n project</a> - The MadLad Squad i18n(internationalisation) project</li>
+				<li><a href="https://github.com/MadLadSquad/hanzi-writer-data-youyin">hanzi-writer-data-youyin</a>{{ _ about_h5_5 }}</li>
+				<li><a href="https://madladsquad.com/untitled-desktop/subprojects/i18n">i18n project</a>{{ _ about_h5_6 }}</li>
 			</ol>
 			<hr>
 		</main>
