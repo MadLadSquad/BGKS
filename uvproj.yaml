@@ -1,5 +1,5 @@
 localhost-commands:
-  - python3 -m http.server 5000
+  - python3 -m http.server 7000
 allowed-extensions:
   - html
   - js
@@ -17,4 +17,4 @@ intermediate-extensions:
   - .tmpl.html
 variables:
   - var: trademark
-    val: LitTok
+    val: BGKS
